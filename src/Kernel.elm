@@ -21,7 +21,6 @@ import Kernel.Debug
 import Kernel.JsArray
 import Kernel.String
 import Kernel.Utils
-import Maybe.Extra
 import Syntax exposing (fakeNode)
 import Types exposing (Eval, EvalErrorData, EvalResult, Value(..))
 import Value exposing (typeError)
@@ -361,7 +360,7 @@ list selector =
         \value ->
             case value of
                 List l ->
-                    Maybe.Extra.traverse selector.fromValue l
+                    traverse selector.fromValue l
 
                 _ ->
                     Nothing
@@ -374,6 +373,30 @@ list selector =
     }
 
 
+
+-- elm-community/maybe-extra/5.3.0
+
+
+traverse : (a -> Maybe b) -> List a -> Maybe (List b)
+traverse f list_ =
+    traverseHelp f list_ []
+
+
+traverseHelp : (a -> Maybe b) -> List a -> List b -> Maybe (List b)
+traverseHelp f list_ acc =
+    case list_ of
+        head :: tail ->
+            case f head of
+                Just a ->
+                    traverseHelp f tail (a :: acc)
+
+                Nothing ->
+                    Nothing
+
+        [] ->
+            Just (List.reverse acc)
+
+
 jsArray : Selector a -> Selector (Array a)
 jsArray selector =
     { fromValue =
@@ -382,7 +405,7 @@ jsArray selector =
                 JsArray jsa ->
                     jsa
                         |> Array.toList
-                        |> Maybe.Extra.traverse selector.fromValue
+                        |> traverse selector.fromValue
                         |> Maybe.map Array.fromList
 
                 _ ->
